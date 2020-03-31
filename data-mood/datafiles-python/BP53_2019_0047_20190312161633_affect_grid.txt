@@ -1,0 +1,3 @@
+expStartTime,subjectID,condition,block,starttime,endtime,responsetime,pleasurerating,arousalrating
+20190312161633,0047,excited,main_pre_foraging,9.14003774549,19.0039097851,9.86387203966,2,1
+20190312161633,0047,excited,main_post_foraging,352.109624012,358.708750891,6.59912687905,2,1

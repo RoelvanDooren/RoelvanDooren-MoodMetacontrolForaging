@@ -1,0 +1,2 @@
+expStartTime,subjectID,condition,block,starttime,endtime,responsetime,pleasurerating,arousalrating
+20190307140304,0004,sad,example,0.00154617779837,135.434586446,135.433040268,3,3

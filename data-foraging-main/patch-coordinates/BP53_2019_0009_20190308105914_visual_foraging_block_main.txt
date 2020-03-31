@@ -1,0 +1,1 @@
+expStartTime,subjectID,condition,block,timespent,patch_number,patch_center_coordinates,patch_times_entered,patch_color,patch_value_per_berry,patch_points_scored,total_points_scored,total_patches_entered,unique_patches_entered,all_encountered_berry_coords

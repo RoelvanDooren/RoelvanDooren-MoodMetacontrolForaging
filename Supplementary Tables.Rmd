@@ -1,0 +1,185 @@
+---
+header-includes:
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
+output: 
+  word_document:
+    reference_docx: Supplementary_Tables.docx
+---
+
+\pagenumbering{gobble}
+
+```{r, echo = FALSE, message = FALSE, error = FALSE, warning = FALSE, results = 'hide'}
+suppressWarnings(suppressMessages(suppressPackageStartupMessages({
+
+library(car)
+library(dplyr) 
+library(tidyr)
+library(pander)
+library(tidyverse)
+library(rstatix)
+library(stringr)
+
+panderOptions("table.split.table", Inf)  ## don't split tables
+panderOptions("missing", "")
+panderOptions("keep.trailing.zeros", FALSE)
+panderOptions('knitr.auto.asis', FALSE)
+panderOptions("table.alignment.default", "right")
+panderOptions("table.split.cells", 40)
+
+p.valueformat <- function(val) {sub("<.", "< .", sub("0.", ".", sub("1.000", "1", val))) }
+d.valueformat <- function(val) {sprintf(ifelse(val > 0, " %.2f", "%.2f"), val) }
+load('./workspaces/mood-workspace.RData')
+
+})))
+
+```
+
+\blandscape
+
+Supplementary Table 1
+---------------------
+*Mean arousal ratings (SD) and paired-sample t-tests for all time point contrasts.*
+
+```{r, echo = FALSE, results = 'asis', warning = FALSE}
+suppressWarnings(suppressMessages(suppressPackageStartupMessages({
+
+mood_data.summarized <- mood_data_long %>% group_by(mood, block) %>% 
+  summarize(M = round(mean(rating), 2), SD = round(sd(rating), 2)) %>% ungroup()
+
+means <- mood_data.summarized %>% 
+  group_split(mood) %>%
+  set_names(map_chr(., ~ unique(.$mood))) %>% 
+  map_df(function(x) {
+    map_df(combos, function(y) { 
+      filter(x, block %in% y) %>% 
+        select(-SD) %>% spread(block, M) %>% drop_na() %>%
+        setNames(., c('mood', 'M.contr1', 'M.contr2'))
+  }, .id = "contrast") %>% arrange(contrast)
+})
+
+sds <- mood_data.summarized %>% 
+  group_split(mood) %>%
+  set_names(map_chr(., ~ unique(.$mood))) %>% 
+  map_df(function(x) {
+    map_df(combos, function(y) { 
+      filter(x, block %in% y) %>% 
+        select(-M) %>% spread(block, SD) %>% drop_na() %>%
+        setNames(., c('mood', 'SD.contr1', 'SD.contr2'))
+  }, .id = "contrast") %>% arrange(contrast)
+})
+
+table.data <- merge(merge(means, sds), t.test.results_timepoint %>% 
+  mutate(p.rounded = p.valueformat( format.pval(p.rounded, eps = 0.001) ), 
+    p.adjusted = p.valueformat( format.pval(p.adjusted, eps = 0.001) ),
+    t.rounded = abs(t.rounded), d = d.valueformat(round(d, 2)),
+    d.lower95CI = d.valueformat(round(lower95CI, 2)), 
+    d.upper95CI = d.valueformat(round(upper95CI, 2)) )) %>%
+  select(-t, -p, -d.magnitude, -d.method, -lower95CI, -upper95CI) %>%
+  mutate( descrip_contr.1 = paste0(sprintf("%.2f", M.contr1), ' (', sprintf("%.2f", SD.contr1), ')'),
+          descrip_contr.2 = paste0(sprintf("%.2f", M.contr2), ' (', sprintf("%.2f", SD.contr2), ')'),
+          CI = paste0(d.lower95CI, ', ', d.upper95CI)) %>%
+  select(mood, contrast, descrip_contr.1, descrip_contr.2, df, t.rounded, p.rounded, p.adjusted, d, CI) %>%
+  arrange(mood, contrast)
+names(table.data) <- c("Rating", "Time\\\npoints\\\ncontrasts", "First contrast\\\n(SD)", "Second contrast\\\n(SD)", "*df*", "|*t*|", "*p*", "*p* corrected", "*d*", "*d* 95% CI")
+
+for (r in unique(table.data$Rating)) {
+  if (r == "Arousal") {
+    write(paste0('**', r, '**', '\n'), stdout())
+    pander(table.data %>% filter(Rating == r) %>% select(-Rating))
+  }
+}
+
+})))
+
+```
+*Note*: both uncorrected and Holm-corrected (for multiple comparisons) *p*-values are reported.
+
+\newpage
+Supplementary Table 2
+---------------------
+*Mean valence ratings (SD) and paired-sample t-tests for all time point contrasts.*
+
+```{r, echo = FALSE, results = 'asis', warning = FALSE}
+suppressWarnings(suppressMessages(suppressPackageStartupMessages({
+
+for (r in unique(table.data$Rating)) {
+  if (r == "Valence") {
+    write(paste0('**', r, '**', '\n'), stdout())
+    pander(table.data %>% filter(Rating == r) %>% select(-Rating))
+  }
+}  
+
+})))
+```
+
+*Note*: both uncorrected and Holm-corrected (for multiple comparisons) *p*-values are reported.
+
+\newpage
+Supplementary Table 3
+---------------------
+*Mean arousal and valence ratings (SD) and associated between-subject t-tests for all time points.*
+
+```{r, echo = FALSE, results = 'asis', warning = FALSE}
+suppressWarnings(suppressMessages(suppressPackageStartupMessages({
+  
+mood_data_arousal.summarized <- mood_data %>% group_by(block, condition) %>% 
+  summarize(rating = 'Arousal', M = round(mean(arousalrating), 2), SD = round(sd(arousalrating), 2))
+
+arousal.means <- mood_data_arousal.summarized %>% 
+  select(-SD) %>% spread(condition, M) %>%
+  rename(M.excited = excited, M.sad = sad) 
+
+arousal.sds <- mood_data_arousal.summarized %>% 
+  select(-M) %>% spread(condition, SD) %>%
+  rename(SD.excited = excited, SD.sad = sad) 
+
+table.data_arousal <- 
+  merge(merge(arousal.means, arousal.sds), t.test.results_arousal %>% 
+  mutate(p.rounded = p.valueformat( format.pval(p.rounded, eps = 0.001) ), 
+    p.adjusted = p.valueformat( format.pval(p.adjusted, eps = 0.001) ),
+    t.rounded = abs(t.rounded), d = d.valueformat(round(d, 2)),
+    d.lower95CI = d.valueformat(round(lower95CI, 2)), 
+    d.upper95CI = d.valueformat(round(upper95CI, 2)) )) %>%
+  select(-t, -p, -d.magnitude, -d.method, -lower95CI, -upper95CI)
+
+mood_data_valence.summarized <- mood_data %>% group_by(block, condition) %>% 
+  summarize(rating = 'Valence', M = round(mean(pleasurerating), 2), SD = round(sd(pleasurerating), 2)) 
+
+valence.means <- mood_data_valence.summarized %>% 
+  select(-SD) %>% spread(condition, M) %>%
+  rename(M.excited = excited, M.sad = sad) 
+
+valence.sds <- mood_data_valence.summarized %>% 
+  select(-M) %>% spread(condition, SD) %>%
+  rename(SD.excited = excited, SD.sad = sad)
+
+table.data_valence <- 
+  merge(merge(valence.means, valence.sds), t.test.results_valence %>% 
+  mutate(p.rounded = p.valueformat( format.pval(p.rounded, eps = 0.001) ), 
+    p.adjusted = p.valueformat( format.pval(p.adjusted, eps = 0.001) ),
+    t.rounded = abs(t.rounded), d = d.valueformat(round(d, 2)),
+    d.lower95CI = d.valueformat(round(lower95CI, 2)), 
+    d.upper95CI = d.valueformat(round(upper95CI, 2)) )) %>%
+  select(-t, -p, -d.magnitude, -d.method, -lower95CI, -upper95CI)
+
+table.data <- merge(table.data_arousal, table.data_valence, all = T) %>% #arrange(rating) %>%
+  arrange(rating, block) %>%
+  mutate( descrip_excited = paste0(sprintf("%.2f", M.excited), ' (', sprintf("%.2f", SD.excited), ')'),
+          descrip_sad = paste0(sprintf("%.2f", M.sad), ' (', sprintf("%.2f", SD.sad), ')'),
+          CI = paste0(d.lower95CI, ', ', d.upper95CI)) %>%
+  select(rating, block, descrip_excited, descrip_sad, df, t.rounded, p.rounded, p.adjusted, d, CI) 
+names(table.data) <- c("Rating", "Time\\\npoint", "Excited\\\n(SD)", "Sad\\\n(SD)", "*df*", "|*t*|", "*p*", "*p* corrected", "*d*", "*d* 95% CI")
+
+for (r in unique(table.data$Rating)) {
+  write(paste0('**', r, '**', '\n'), stdout())
+  pander(table.data %>% filter(Rating == r) %>% select(-Rating))
+}
+})))
+
+```
+
+*Note*: *df*-values were corrected (Welch's approximation) in case of a violation of the assumption of homogeneity of variances. Moreover, both uncorrected and Holm-corrected (for multiple comparisons) *p*-values are reported. 
+
+\elandscape

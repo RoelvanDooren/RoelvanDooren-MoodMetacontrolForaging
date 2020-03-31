@@ -1,0 +1,10 @@
+expStartTime,subjectID,condition,block,timespent,patch_number,patch_center_coordinates,patch_times_entered,patch_color,patch_value_per_berry,patch_points_scored,total_points_scored,total_patches_entered,unique_patches_entered,all_encountered_berry_coords
+20190326140454,0029,excited,baseline,300.010598227,1,(492, 170),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010624489,2,(334, 196),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010631734,3,(230, 553),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010637469,4,(83, 244),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010643507,5,(140, 199),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010648638,6,(565, 189),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010654374,7,(438, 245),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010659506,8,(227, 467),1,(255, 0, 0),1,0,0,9,9,NA
+20190326140454,0029,excited,baseline,300.010664637,9,(359, 126),1,(255, 0, 0),1,0,0,9,9,NA

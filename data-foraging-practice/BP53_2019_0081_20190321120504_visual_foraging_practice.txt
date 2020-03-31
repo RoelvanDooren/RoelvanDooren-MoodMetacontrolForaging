@@ -1,0 +1,2 @@
+expStartTime,subjectID,trial_num,totaltrialtime,total_collisions,total_turned
+20190321120504,0081,practice,21.9192624714,0,12111.9956127
