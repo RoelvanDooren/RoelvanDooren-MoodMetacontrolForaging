@@ -72,7 +72,7 @@ ggplot(merged_leavetimes) + geom_boxplot(aes(condition, MU, color = phase))
 get.outliers <- function(df) { data.frame(MU = boxplot.stats(df$MU, coef = 2.2)$out) }
 outliers <- merged_leavetimes %>% group_by(phase, condition) %>% do(get.outliers(.)) 
 outliers.participants <- merged_leavetimes %>% inner_join(outliers) %>% pull(subjectID)
-length(outliers.participants)
+length(unique(outliers.participants))
 
 merged_leavetimes <- merged_leavetimes[-which(merged_leavetimes$subjectID %in% outliers.participants),]
 
@@ -82,7 +82,7 @@ merged_leavetimes <- merged_leavetimes[-which(merged_leavetimes$subjectID %in% o
 #   1. Baseline behavior: Optimal foraging score ~ meanValence (= mean(1, 2)) * meanArousal (= mean(1, 2))
 #   2. Post-induction behavior: Optimal foraging score ~ meanValence (= mean(5, 6)) * meanArousal (= mean(5, 6))
 
-lm_dat_format <- dcast(setDT(merge(merged_leavetimes, mood_data)), 
+lm_dat_format <- data.table::dcast(setDT(merge(merged_leavetimes, mood_data)), 
     subjectID + condition + phase + MU + SD ~ block, value.var = c("pleasurerating", "arousalrating")) %>%
   group_by(subjectID, phase) %>% mutate(
     pleasurerating = ifelse(phase == 'baseline', mean(c(pleasurerating_1, pleasurerating_2)),
@@ -112,11 +112,17 @@ lm_dat_format %>% group_by(phase) %>%
 # 1) Baseline foraging ~ mood
 #########################
 
-simple <- lm(MU ~ arousalrating + pleasurerating, data = lm_dat_format %>% filter(phase == 'baseline'))
-twoway <- update(simple, .~. + arousalrating : pleasurerating)
-anova(simple, twoway); BIC(simple); BIC(twoway)
+with(lm_dat_format %>% filter(phase == 'baseline'), cor.test(as.numeric(condition), arousalrating, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format %>% filter(phase == 'baseline'), correlationBF(as.numeric(condition), arousalrating))
+with(lm_dat_format %>% filter(phase == 'baseline'), cor.test(as.numeric(condition), pleasurerating, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format %>% filter(phase == 'baseline'), correlationBF(as.numeric(condition), pleasurerating))
+
+simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'baseline'))
+twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
+threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
+anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
-simple %>% report() %>% table_long()
+simple %>% report()# %>% table_long()
 
 ### Check model assumptions
 # Assess assumption of independent errors
@@ -131,22 +137,25 @@ par(mfrow = c(2, 2))
 plot(simple)
 
 # Pre-mood induction: regress MU on pleasure and arousal measurements
-lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating, data = lm_dat_format %>% phase=="baseline")
-lmPleasure <- lmBF(MU ~ pleasurerating, data = lm_dat_format %>% phase=="baseline")
-lmArousal <- lmBF(MU ~  arousalrating, data = lm_dat_format %>% phase=="baseline") 
-
-allBFs <- c(lmPleasureArousal, lmPleasure, lmArousal)
-summary(allBFs)
+lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="baseline") )
+lmPleasureArousal # BF10
+1/lmPleasureArousal # BF01 (= 1/BF10) = 4.2914188286349901347
 
 #########################
 # 2) Post-manipulation foraging ~ mood
 #########################
 
-simple <- lm(MU ~ arousalrating + pleasurerating, data = lm_dat_format %>% filter(phase == 'post-manipulation'))
-twoway <- update(simple, .~. + arousalrating : pleasurerating)
-anova(simple, twoway); BIC(simple); BIC(twoway)
+with(lm_dat_format %>% filter(phase == 'post-manipulation'), cor.test(as.numeric(condition), arousalrating, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format %>% filter(phase == 'post-manipulation'), correlationBF(as.numeric(condition), arousalrating))
+with(lm_dat_format %>% filter(phase == 'post-manipulation'), cor.test(as.numeric(condition), pleasurerating, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format %>% filter(phase == 'post-manipulation'), correlationBF(as.numeric(condition), pleasurerating))
+
+simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'post-manipulation'))
+twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
+threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
+anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
-simple %>% report() %>% table_short()
+simple %>% report() #%>% table_long()
 
 ### Check model assumptions
 # Assess assumption of independent errors
@@ -160,16 +169,10 @@ vif(simple) # No predictor's VIF > 10, all fine
 par(mfrow = c(2, 2))
 plot(simple)
 
-# Cache the data on disk
-#write.csv2(lm_dat_format, './data-processed/between_subjects_lm.csv', row.names = F)
-
 # Post-mood induction: regress MU on pleasure and arousal measurements
-lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating, data = lm_dat_format %>% phase=="post-manipulation")
-lmPleasure <- lmBF(MU ~ pleasurerating, data = lm_dat_format %>% phase=="post-manipulation")
-lmArousal <- lmBF(MU ~  arousalrating, data = lm_dat_format %>% phase=="post-manipulation") 
-
-allBFs <- c(lmPleasureArousal, lmPleasure, lmArousal)
-summary(allBFs)
+lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="post-manipulation"))
+lmPleasureArousal # BF10
+1/lmPleasureArousal # BF01 (= 1/BF10) = 33.143759639061322275
 
 #########################
 # 3) Delta foraging ~ delta mood
@@ -186,30 +189,33 @@ lm_dat_format_delta <- lm_dat_format %>% group_by(subjectID) %>% mutate(
     deltaArousal = arousalrating[phase == 'post-manipulation'] - arousalrating[phase == 'baseline']
     ) %>% select(subjectID, condition, deltaMU, deltaSD, deltaPleasure, deltaArousal) %>% distinct()
 
-simple <- lm(deltaMU ~  deltaArousal + deltaPleasure, data = lm_dat_format_delta )
-twoway <- update(simple, .~. + deltaPleasure : deltaArousal)
-anova(simple, twoway); BIC(simple); BIC(twoway)
+with(lm_dat_format_delta, cor.test(as.numeric(condition), deltaArousal, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format_delta, correlationBF(as.numeric(condition), deltaArousal))
+with(lm_dat_format_delta, cor.test(as.numeric(condition), deltaPleasure, alternative = 'two.sided', method='pearson'))
+with(lm_dat_format_delta, correlationBF(as.numeric(condition), deltaPleasure))
+
+simple <- lm(deltaMU ~  deltaArousal + deltaPleasure + condition, data = lm_dat_format_delta )
+twoway <- update(simple, .~. + deltaPleasure : deltaArousal + condition : deltaPleasure + condition : deltaArousal)
+threeway <- update(twoway, .~. + deltaArousal : deltaPleasure : condition)
+anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
-simple %>% report() %>% table_short()
+simple %>% report() #%>% table_long()
 
 ### Check model assumptions
 # Assess assumption of independent errors
-durbinWatsonTest(simple) # Note that p is bootstrapped, and will therefore always return slightly different results
+dw_pval <- c()
+for (i in seq(1, 1000)) {
+  dw_pval <- c(dw_pval, durbinWatsonTest(simple, exact = T)$p) # Note that p is bootstrapped, and will therefore always return slightly different results)
+}; mean(dw_pval) # As pvalue is close to .05, we ran multiple iterations. Bootstrapped pvalue > .05.
 
 # Assess the assumption of no multicollinearity.
 vif(simple) # No predictor's VIF > 10, all fine
 1 / vif(simple) # Tolerance > 0.2, all fine
 
-# Cache the data on disk
-#write.csv2(lm_dat_format_delta, './data-processed/within_subjects_lm.csv', row.names = F)
-
 # Regress deltaMU on deltaPleasure and deltaArousal
-lmPleasureArousal <- lmBF(deltaMU ~ deltaPleasure + deltaArousal, data = lm_dat_format_delta)
-lmPleasure <- lmBF(deltaMU ~ deltaPleasure, data = lm_dat_format_delta)
-lmArousal <- lmBF(deltaMU ~  deltaArousal, data = lm_dat_format_delta) 
-
-allBFs <- c(lmPleasureArousal, lmPleasure, lmArousal)
-summary(allBFs)
+lmPleasureArousal <- lmBF(deltaMU ~ deltaPleasure + deltaArousal + condition, data = lm_dat_format_delta)
+lmPleasureArousal # BF10 = 5.1237579337196503815
+1/lmPleasureArousal # BF01 (= 1/BF10)
 
 ###########################################################################################################################################################################################################################################################################################################################################################################################################################################
 # Save the current workspace ----------------------------------------------
@@ -228,7 +234,6 @@ lm_dat_format_long <- reshape(
 lm_dat_format_long$ratingtype <- factor(lm_dat_format_long$ratingtype, labels = c('Arousal', 'Valence'), levels = c('arousalrating', 'pleasurerating'))
 
 textSize = 20
-png('./plots/Figure-4.png', width = 1000)
 ggplot(data = lm_dat_format_long, aes(x = rating, y = deltaMU, group = ratingtype)) + 
   geom_point(color = 'grey') + facet_wrap(~ ratingtype) +
   geom_smooth(method = "lm", se = TRUE, color = 'black', linetype = 'dashed', aes(group = ratingtype)) +
@@ -258,4 +263,4 @@ ggplot(data = lm_dat_format_long, aes(x = rating, y = deltaMU, group = ratingtyp
          strip.text.x = element_text(size = textSize, colour = 'black'),
          strip.background = element_rect(colour = 'white', fill = 'white'),
          plot.background = element_rect(fill = "white", colour = NA))
-dev.off()
+ggsave('./plots/Figure-4.png', antialias ='none', width = 13.3)

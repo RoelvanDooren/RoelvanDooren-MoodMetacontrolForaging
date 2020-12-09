@@ -300,8 +300,6 @@ save.image("./workspaces/general-workspace.RData")
 # Process foraging data post-mood induction -------------------------------
 ###########################################################################################################################################################################################################################################################################################################################################################################################################################################
 
-load("./workspaces/general-workspace.RData")
-
 # If the post-mood induction foraging data has already been processed, we can skip another part of the script!
 TestDataProcessed = TRUE
 

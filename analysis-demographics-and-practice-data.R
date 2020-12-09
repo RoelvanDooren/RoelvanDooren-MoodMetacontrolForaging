@@ -70,3 +70,4 @@ names(which(with(practice_dat, table(subjectID)) != 1)) # All fine!
 
 # Check the mean duration of the practice trial
 summarySE(practice_dat, measurevar = 'totaltrialtime', na.rm = T)
+
