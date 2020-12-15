@@ -117,9 +117,11 @@ with(lm_dat_format %>% filter(phase == 'baseline'), correlationBF(as.numeric(con
 with(lm_dat_format %>% filter(phase == 'baseline'), cor.test(as.numeric(condition), pleasurerating, alternative = 'two.sided', method='pearson'))
 with(lm_dat_format %>% filter(phase == 'baseline'), correlationBF(as.numeric(condition), pleasurerating))
 
-simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'baseline'))
-twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
-threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
+simple <- lm(MU ~ arousalrating + pleasurerating, data = lm_dat_format %>% filter(phase == 'baseline'))
+#simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'baseline'))
+twoway <- update(simple, .~. + arousalrating : pleasurerating)
+#twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
+#threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
 anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
 simple %>% report()# %>% table_long()
@@ -137,9 +139,10 @@ par(mfrow = c(2, 2))
 plot(simple)
 
 # Pre-mood induction: regress MU on pleasure and arousal measurements
-lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="baseline") )
+lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating, data = lm_dat_format %>% filter(phase=="baseline") )
+#lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="baseline") )
 lmPleasureArousal # BF10
-1/lmPleasureArousal # BF01 (= 1/BF10) = 4.2914188286349901347
+1/lmPleasureArousal # BF01 (= 1/BF10)
 
 #########################
 # 2) Post-manipulation foraging ~ mood
@@ -150,9 +153,11 @@ with(lm_dat_format %>% filter(phase == 'post-manipulation'), correlationBF(as.nu
 with(lm_dat_format %>% filter(phase == 'post-manipulation'), cor.test(as.numeric(condition), pleasurerating, alternative = 'two.sided', method='pearson'))
 with(lm_dat_format %>% filter(phase == 'post-manipulation'), correlationBF(as.numeric(condition), pleasurerating))
 
-simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'post-manipulation'))
-twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
-threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
+simple <- lm(MU ~ arousalrating + pleasurerating, data = lm_dat_format %>% filter(phase == 'post-manipulation'))
+#simple <- lm(MU ~ arousalrating + pleasurerating + condition, data = lm_dat_format %>% filter(phase == 'post-manipulation'))
+twoway <- update(simple, .~. + arousalrating : pleasurerating)
+#twoway <- update(simple, .~. + arousalrating : pleasurerating + arousalrating : condition + pleasurerating : condition)
+#threeway <- update(twoway, .~. + arousalrating : pleasurerating : condition)
 anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
 simple %>% report() #%>% table_long()
@@ -170,9 +175,10 @@ par(mfrow = c(2, 2))
 plot(simple)
 
 # Post-mood induction: regress MU on pleasure and arousal measurements
-lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="post-manipulation"))
+lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating, data = lm_dat_format %>% filter(phase=="post-manipulation"))
+#lmPleasureArousal <- lmBF(MU ~ pleasurerating + arousalrating + condition, data = lm_dat_format %>% filter(phase=="post-manipulation"))
 lmPleasureArousal # BF10
-1/lmPleasureArousal # BF01 (= 1/BF10) = 33.143759639061322275
+1/lmPleasureArousal # BF01 (= 1/BF10)
 
 #########################
 # 3) Delta foraging ~ delta mood
@@ -194,9 +200,11 @@ with(lm_dat_format_delta, correlationBF(as.numeric(condition), deltaArousal))
 with(lm_dat_format_delta, cor.test(as.numeric(condition), deltaPleasure, alternative = 'two.sided', method='pearson'))
 with(lm_dat_format_delta, correlationBF(as.numeric(condition), deltaPleasure))
 
-simple <- lm(deltaMU ~  deltaArousal + deltaPleasure + condition, data = lm_dat_format_delta )
-twoway <- update(simple, .~. + deltaPleasure : deltaArousal + condition : deltaPleasure + condition : deltaArousal)
-threeway <- update(twoway, .~. + deltaArousal : deltaPleasure : condition)
+simple <- lm(deltaMU ~  deltaArousal + deltaPleasure, data = lm_dat_format_delta )
+#simple <- lm(deltaMU ~  deltaArousal + deltaPleasure + condition, data = lm_dat_format_delta )
+twoway <- update(simple, .~. + deltaPleasure : deltaArousal)
+#twoway <- update(simple, .~. + deltaPleasure : deltaArousal + condition : deltaPleasure + condition : deltaArousal)
+#threeway <- update(twoway, .~. + deltaArousal : deltaPleasure : condition)
 anova(simple, twoway); BIC(simple); BIC(twoway)#; BIC(threeway)
 summary(simple)
 simple %>% report() #%>% table_long()
@@ -213,15 +221,15 @@ vif(simple) # No predictor's VIF > 10, all fine
 1 / vif(simple) # Tolerance > 0.2, all fine
 
 # Regress deltaMU on deltaPleasure and deltaArousal
-lmPleasureArousal <- lmBF(deltaMU ~ deltaPleasure + deltaArousal + condition, data = lm_dat_format_delta)
-lmPleasureArousal # BF10 = 5.1237579337196503815
+lmPleasureArousal <- lmBF(deltaMU ~ deltaPleasure + deltaArousal, data = lm_dat_format_delta)
+#lmPleasureArousal <- lmBF(deltaMU ~ deltaPleasure + deltaArousal + condition, data = lm_dat_format_delta)
+lmPleasureArousal # BF10
 1/lmPleasureArousal # BF01 (= 1/BF10)
 
 ###########################################################################################################################################################################################################################################################################################################################################################################################################################################
 # Save the current workspace ----------------------------------------------
 ###########################################################################################################################################################################################################################################################################################################################################################################################################################################
 save.image("./workspaces/LTD-workspace.RData")
-
 
 ###########################################################################################################################################################################################################################################################################################################################################################################################################################################
 # Create plots ------------------------------------------------------------
