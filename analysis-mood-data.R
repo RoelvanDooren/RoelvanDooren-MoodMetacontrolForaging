@@ -379,20 +379,25 @@ df_heatmap <- dcast(mood_data_long %>% group_by(subjectID, condition, block, moo
 heatmaps <- df_heatmap %>% group_by(block) %>%
   do(plots = ggplot(., aes(x=Arousal, y=Valence, fill=Frequency)) +
   geom_tile() + coord_cartesian(ylim = c(-4, 4), xlim = c(-4, 4), clip = 'off') +
-  scale_fill_gradient(low="white", high="blue") + ggtitle(paste0('Timepoint ', unique(.$block))) +
+  scale_fill_gradient(low="white", high="blue") + ggtitle(paste0('Time point ', unique(.$block))) +
   scale_x_continuous(expand = c(0, 0), breaks = seq(-4, 4, 1)) +
   scale_y_continuous(expand = c(0, 0), breaks = seq(-4, 4, 1)) +
   facet_wrap(~condition) +
   theme( plot.margin = unit(c(3, 1, 1, 1), 'cm'),
-         legend.position = c(0.675, 1.25),
-         legend.direction = 'horizontal',
+         legend.position = c(0.775, 1.35),
+         #legend.position = c(0.475, 1.3),
+         legend.direction = 'horizontal',         
+         legend.title = element_text(size = textSize, colour = "black"), 
+         legend.spacing.x = unit(0.70, 'cm'),
+         legend.key.size = unit(3, 'line'),
+         
          axis.line = element_line(linetype = "solid"), 
          axis.title = element_text(size = textSize, colour = "black"), 
          axis.title.x = element_text(margin=margin(15,0,0,0)),
          axis.title.y = element_text(margin=margin(0,15,0,0)),
-         legend.title = element_text(size = textSize, colour = "black"), 
-         legend.spacing.x = unit(0.70, 'cm'),
-         legend.key.size = unit(3.25, 'line'),
+         #legend.title = element_text(size = textSize, colour = "black"), 
+         #legend.spacing.x = unit(0.70, 'cm'),
+         #legend.key.size = unit(3.25, 'line'),
          axis.text = element_text(size = textSize, colour = "black"), 
          axis.text.x = element_text(margin=margin(10,0,0,0)), 
          axis.text.y = element_text(margin=margin(0,10,0,0)), 
@@ -411,6 +416,7 @@ heatmaps <- df_heatmap %>% group_by(block) %>%
   ) 
 
 # Save heatmaps
-pdf('./plots/Heatmaps.pdf', paper = "USr", width = 9.3, height = 9.3)
-invisible(lapply(heatmaps$plots, print))
-dev.off()
+for (plot in seq(1, length(heatmaps$plots)) ) {
+  lapply(heatmaps$plots[plot], print)
+  ggsave(paste0('./plots/Heatmap-', plot,'.png'), antialias ='none', width = 13.3, height = 7)
+}
